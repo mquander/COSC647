@@ -1,0 +1,15 @@
+#!/bin/sh
+
+touch attacking
+
+old=`ls -l /etc/shadow`
+new=`ls -l /etc/shadow`
+
+while [ "$old" = "$new" ]
+do
+    new=`ls -l /etc/shadow`
+done
+
+echo "STOP... The -- shadow -- file has been changed"
+
+rm attacking
