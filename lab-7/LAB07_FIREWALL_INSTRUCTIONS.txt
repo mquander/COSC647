@@ -1,0 +1,52 @@
+==================================================
+  Loadable Kernel Module (LKM) Instructions
+==================================================
+1. To build the kernel objec (.ko) file
+   $ make args="<filename_w/o_.c>"
+   Example: $ make args="hello" for file "hello.c"
+
+2. To install the compiled .ko file
+   $ sudo insmod <filename>.ko
+   Example: $ sudo insmod hello.ko
+
+3. To remove the installed .ko file
+   $ sudo rmmod <filename>.ko
+   Example: $ sudo rmmod hello.ko
+
+4. To view the result
+   $ tail /var/log/syslog
+
+5. (Optional) Install missing packages if errors displayed
+   $ su -- seedubuntu   // Root credentials
+   $ apt-get install manpages-dev manpages-posix manpages-posix-dev 
+
+
+TO. (Not turn in) Compile and install "dropAllPackets.ko" into the kernel.
+    Verify whether you have access to the internet by "ping www.towson.edu"
+
+=================================
+TURN-IN TASKS
+=================================
++ TASK 01: Complete "dropUdpPackets.c" to drop only UDP packets
+  Hints:
+    + You will need to extract the struct iphdr (IP header) and take a look at the protocol inside the header.      
+    + Directions:
+    - Get iphdr from sb_buff as a pointer.
+    - Typecast idphdr to either tcphdr or udphdr pointer based on the "protocal" field of iphdr.
+      Note: Make use of the ihl (ip header length) in iphdr.
+    - Get the protocol and compare that to UDP protocol (what number was that?).
+      If protocol is UDP, drop packets.
+      If not, accept packets.
+
++ TASK 02: Complete "dropWebPackets.c" to drop only WEB packets (i.e., allow ping, telnet traffic, etc).
+  Hints:
+    + You will need to extract the port from the struct iphdr (IP header).
+      However, this structure does not contain the source port.
+    + There are two other sub-structures of "iph", namely "tcph" and "udph" inside iph that can contain the source port.
+    + Directions:
+    - Get iphdr from sb_buff as a pointer.
+    - Typecast idphdr to either tcphdr or udphdr pointer based on the "protocal" field of iphdr.
+      Note: Make use of the ihl (ip header length) in iphdr.
+    - Get the source port from either tcphdr or udphdr and compare that to 80.
+      If port is 80, drop packets
+      If not, accept packets.
