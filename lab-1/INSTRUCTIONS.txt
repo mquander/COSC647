@@ -1,0 +1,53 @@
+STEP 0: INITIAL SETUP
+0.1 $ su root
+      password: seedubuntu                    /* Login as root*/
+0.2 # sysctl -w kernel.randomize_va_space=0	  /* Disable ASLR */
+0.3 # gcc -z execstack -o call_shellcode call_shellcode.c
+0.4 # ./call_shellcode 											  /* Create a shell now */
+	    # whoami
+        root                                    
+0.5   # exit                                  /* Get back to "root" */
+    /* Compile stack.c under "root" */
+0.6 # gcc stack.c -o stack -g -fno-stack-protector -z execstack
+0.7 # chmod 4755 stack                        
+0.8 # exit                                    /* Get back to "seed" */
+
+STEP 1: FIRST TRIAL
+1.1 $ gcc -o exploit exploit.c			          /* Compile exploit.c under "seed" */
+1.2 $ ./exploit                               /* Run exploit to change "badfile" */
+1.3 $ ./stack                                 /* "Seg Fault" error! Why??? */
+
+STEP 2: CREATING ATTACK VECTOR
+    Debug ./stack in gdb
+2.1 In bof(): Set a breakpoint after strcpy()
+2.2 Run the program.
+2.3 Find addresses of buffer[] and ebp
+2.4 Estimate the <offset> from buffer[] to bof()'s RETURN ADDRESS
+      <offset> = 0x?? (bytes)
+2.5 Estimate an address in buffer[] pointing to nops BEFORE shellcode
+      <address> = 0x????????
+2.6 Modify "exploit.c" to contain your attack vector
+            
+STEP 3: EXPLOITATION
+3.1 $ gcc -o exploit exploit.c			          /* Compile exploit.c, in "seed" user */
+3.2 $ ./exploit													      /* Modify "badfile" under "seed" user */
+3.3 $ ./stack
+      # whoami														
+        root                                  /* SUCCESS. Root shell obtained */
+      # exit
+
+/*--- USEFUL GDB COMMANDS ---*/
+	$ gdb -q stack
+	$ info func
+	$ list <line #START>, <line #END> 	/* e.g., list 1, 20 */
+	$ (gdb) break <line #> 							/* e.g., break 24, break 14 */
+	$ (gdb) break <function_name>				/* e.g., break bof, break main */
+	$ run
+	$ print &str_main
+	$ x/128x buffer
+
+/*--- NOTES ---*/
+- Potential error when debugging "./stack" with gdb because gcc 4.8.1 generates 
+  dwarf4 debug info which gdb 7.4 can't understand.
+- To fix, either (1) install gdb 7.6 or (2) compile with "-gdwarf-3" in step 1.2
+- To check gdb/gcc versions: $ gdb and $ gcc -v
